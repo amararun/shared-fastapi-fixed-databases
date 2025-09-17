@@ -1,0 +1,181 @@
+{
+    "openapi": "3.1.1",
+    "info": {
+        "title": "Fixed Database Connector API",
+        "version": "1.0.0",
+        "description": "API for connecting to pre-configured cloud databases (Aiven MySQL/PostgreSQL, Supabase, Neon) and executing read-only SQL queries. The API manages secure connections and returns query results in JSON or CSV format."
+    },
+    "servers": [
+        {
+            "url": "https://fixed-db.hosting.tigzig.com",
+            "description": "Main API server"
+        }
+    ],
+    "paths": {
+        "/sqlquery/": {
+            "get": {
+                "summary": "Execute SQL Query on a Pre-configured Cloud Database",
+                "operationId": "execute_sql_query_on_cloud_db",
+                "description": "Connects to a specified cloud database and executes a read-only SQL query. The user selects a provider and output format, and the API handles the secure connection details. Returns JSON by default or CSV file for download.",
+                "parameters": [
+                    {
+                        "name": "sqlquery",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The read-only SQL query (e.g., SELECT, SHOW TABLES) to execute on the chosen database. MySQL or PostgreSQL compliant based on the database"
+                    },
+                    {
+                        "name": "cloud",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "aiven_postgres",
+                                "supabase_postgres",
+                                "neon_postgres"
+                            ]
+                        },
+                        "description": "The pre-configured cloud database provider to connect to."
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "json",
+                                "csv"
+                            ],
+                            "default": "json"
+                        },
+                        "description": "Output format for query results. 'json' returns structured JSON data, 'csv' returns a downloadable CSV file."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response. Returns query results in the requested format.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QueryResult"
+                                }
+                            },
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "detail": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "QueryResult": {
+                "title": "Query Result",
+                "type": "object",
+                "properties": {
+                    "rows": {
+                        "title": "Rows",
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        },
+                        "description": "Array of row objects containing query results"
+                    },
+                    "truncated": {
+                        "title": "Truncated",
+                        "type": "boolean",
+                        "description": "Indicates if results were truncated due to row limits"
+                    }
+                },
+                "required": ["rows", "truncated"]
+            },
+            "HTTPValidationError": {
+                "title": "HTTP Validation Error",
+                "type": "object",
+                "properties": {
+                    "detail": {
+                        "title": "Detail",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        }
+                    }
+                }
+            },
+            "ValidationError": {
+                "title": "Validation Error",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "loc": {
+                        "title": "Location",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "msg": {
+                        "title": "Message",
+                        "type": "string"
+                    },
+                    "type": {
+                        "title": "Error Type",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "API_KEY",
+                "description": "API Key authentication using a Bearer token. Provide your API key in the Authorization header as 'Bearer 8h8br-1NC9__hw09G4mbA'. Example: Authorization: Bearer 8h8br-1NC9__hw09G4mbA"
+            }
+        }
+    }
+}

@@ -1,0 +1,147 @@
+# Semantic layer for cricket match data (ODI and T20)
+
+cloud_table_mapping:
+  supabase_postgres:
+    schema: public
+    table: cricket_one_day_international
+    description: >
+      Ball-by-ball data for One Day International matches,
+      from 2003 through 2025 (continually updated).
+  neon_postgres:
+    schema: public
+    table: cricket_t20
+    description: >
+      Ball-by-ball data for Twenty20 matches,
+      from 2005 through 2025 (continually updated).
+
+table_metadata:
+  description: >
+    Each row in these tables represents a single delivery (ball) in a cricket match.
+    The data captures match details, player participation, runs, extras, and dismissals.
+    Only computations that can be derived from ball-by-ball data should be attempted.
+
+  versions:
+    ODI:
+      overs_per_innings: 50
+      expected_innings: 2
+    T20:
+      overs_per_innings: 20
+      expected_innings: 2
+
+  notes_on_variation:
+    - Although expected_innings = 2 for both ODI and T20,
+      some matches may have fewer or more innings due to cancellations,
+      weather, or special match formats.
+    - The table structures are identical across ODI and T20 datasets.
+    - Overs may have more than 6 deliveries (e.g., "0.7") due to wides or no-balls.
+
+critical_details:
+  - Answer only questions related to cricket data from these tables.
+  - Do not make up data or use external sources like web search.
+
+ball_counting:
+  - The `ball` field (e.g., "0.1", "7.5") is an identifier for over and ball, not a sequential count.
+  - Overs may contain more than 6 balls due to wides or no-balls (e.g., "0.7").
+  - Use COUNT(*) to calculate total balls bowled.
+
+runs_calculation:
+  - If user specifies "runs off bat," use `runs_off_bat`.
+  - If user specifies "total runs," compute as `runs_off_bat + extras`.
+  - Blank values for extras components (wides, no-balls, byes, leg-byes, penalty) should be treated as 0.
+
+wickets:
+  - Check both `wicket_type` and `other_wicket_type` for dismissals.
+  - If either is non-empty, that delivery contains at least one dismissal.
+
+player_name_queries:
+  - If a player’s full name is known, use that exact string in queries.
+  - If not, use surname with wildcards (%) to capture possible variations.
+
+user_requests:
+  - If user asks for a chart, reply: "Currently charts cannot be generated here. Please use the AI Chat Box on the app."
+  - Respond concisely with factual answers derived exclusively from these tables.
+  - Convert user questions into PostgreSQL queries that reference the correct schema + table mapping.
+
+fields_summary:
+  - Match details: match_id, season, start_date, venue
+  - Inning/ball info: innings, ball
+  - Teams/players: batting_team, bowling_team, striker, non_striker, bowler
+  - Outcome: runs_off_bat, extras, wides, noballs, byes, legbyes, penalty
+  - Dismissals: wicket_type, player_dismissed, other_wicket_type, other_player_dismissed
+
+examples:
+  - description: >
+      A delivery with no runs scored, featuring Anderson bowling to Kohli,
+      with Ashwin at the non-striker’s end. First ball of the 47th over in the 4th innings.
+    record:
+      match_id: "1243384"
+      season: "2020/21"
+      start_date: "2021-02-05"
+      venue: "MA Chidambaram Stadium"
+      innings: 4
+      ball: "46.1"
+      batting_team: "India"
+      bowling_team: "England"
+      striker: "V Kohli"
+      non_striker: "R Ashwin"
+      bowler: "JM Anderson"
+      runs_off_bat: 0
+      extras: 0
+
+  - description: >
+      A delivery where a single was scored, featuring Ecclestone bowling to Devine,
+      with Satterthwaite at the non-striker’s end. Third ball of the 12th over in the 2nd innings.
+    record:
+      match_id: "1249234"
+      season: "2020/21"
+      start_date: "2021-02-28"
+      venue: "University Oval"
+      innings: 2
+      ball: "11.3"
+      batting_team: "New Zealand"
+      bowling_team: "England"
+      striker: "SFM Devine"
+      non_striker: "AE Satterthwaite"
+      bowler: "S Ecclestone"
+      runs_off_bat: 1
+      extras: 0
+
+  - description: >
+      A delivery where a wide was bowled, featuring Naveen-ul-Haq bowling to Shumba,
+      with Musakanda at the non-striker’s end. Second ball of the 7th over in the 2nd innings.
+    record:
+      match_id: "1252060"
+      season: "2020/21"
+      start_date: "2021-03-20"
+      venue: "Sheikh Zayed Stadium"
+      innings: 2
+      ball: "6.2"
+      batting_team: "Zimbabwe"
+      bowling_team: "Afghanistan"
+      striker: "M Shumba"
+      non_striker: "TK Musakanda"
+      bowler: "Naveen-ul-Haq"
+      runs_off_bat: 0
+      extras: 1
+      wides: 1
+
+  - description: >
+      A delivery where a wicket took place: Philippe dismissed leg before wicket,
+      featuring Boland bowling to Philippe with Vince at the non-striker’s end.
+      Third ball of the 4th over in the 2nd innings.
+    record:
+      match_id: "1226827"
+      season: "2020/21"
+      start_date: "2021-01-24"
+      venue: "Melbourne Cricket Ground"
+      innings: 2
+      ball: "2.3"
+      batting_team: "Sydney Sixers"
+      bowling_team: "Hobart Hurricanes"
+      striker: "JR Philippe"
+      non_striker: "JM Vince"
+      bowler: "SM Boland"
+      runs_off_bat: 0
+      extras: 0
+      wicket_type: "lbw"
+      player_dismissed: "JR Philippe"

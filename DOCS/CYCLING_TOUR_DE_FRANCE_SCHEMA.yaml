@@ -1,0 +1,128 @@
+# Semantic layer for Tour de France cycling data (I-1 Postgres)
+
+cloud_table_mapping:
+  i1_postgres:
+    schema: public
+    riders_history:
+      men_table: tourdefrance_riders_history_men
+      women_table: tourdefrance_riders_history_women
+      description: >
+        Rider-level results for Tour de France editions. Each row = one rider in a given Tour.
+        Includes overall rank, team, times, gap, distance, number of stages, and total time.
+        Primary table for overall rankings, winners, and career stats.
+      stats:
+        men:
+          row_count: ~10179
+          min_year: 1903
+          max_year: 2025
+        women:
+          row_count: ~466
+          min_year: 2022
+          max_year: 2025
+    stages_history:
+      men_table: tourdefrance_stages_history_men
+      women_table: tourdefrance_stages_history_women
+      description: >
+        Stage-level results for Tour de France editions. Each row = one stage of a Tour.
+        Includes stage start, end, winner, and jersey leaders (yellow, green, polka-dot, white).
+        Useful for analyzing stage winners and jersey holders across Tours.
+      stats:
+        men:
+          row_count: ~2413
+          min_year: 1903
+          max_year: 2025
+        women:
+          row_count: ~33
+          min_year: 2022
+          max_year: 2025
+
+riders_history_schema:
+  - rank: integer, finishing position of the rider in the Tour edition
+  - rider: string, rider full name
+  - rider_no: integer/string, rider’s bib number (may vary across years)
+  - team: string, rider’s team name
+  - times: string, finishing time in h/m/s
+  - gap: string, time gap to leader (e.g., "+ 02h 54' 35''")
+  - b: string/optional, bonus seconds
+  - p: string/optional, penalty or other notation
+  - year: integer, year of the Tour edition
+  - distance_km: integer, total distance of that year’s Tour (in km)
+  - number_of_stages: integer, number of stages in that Tour edition
+  - resulttype: string, type of result (e.g., "time")
+  - totalseconds: integer, finishing time converted to total seconds
+  - gapseconds: integer, gap to leader in seconds
+
+riders_history_examples:
+  - men_record:
+      rank: 7
+      rider: "EMILE GEORGET"
+      rider_no: 11
+      team: "PEUGEOT-WOLBER"
+      times: "204h 49' 47''"
+      gap: "+ 04h 20' 59''"
+      b: null
+      p: null
+      year: 1914
+      distance_km: 5380
+      number_of_stages: 15
+      resulttype: "time"
+      totalseconds: 737387
+      gapseconds: 15659
+  - women_record:
+      rank: 20
+      rider: "LIANE LIPPERT"
+      rider_no: 5
+      team: "MOVISTAR TEAM WOMEN"
+      times: "25h 35' 37''"
+      gap: "+ 00h 18' 02''"
+      b: "14'"
+      p: null
+      year: 2023
+      distance_km: 956
+      number_of_stages: 8
+      resulttype: "time"
+      totalseconds: 92137
+      gapseconds: 1082
+
+stages_history_schema:
+  - year: integer, year of the Tour edition
+  - totaltdfdistance: integer, total Tour distance in km
+  - stages: integer, number of stages in that year’s Tour
+  - start: string, starting location of the stage
+  - end: string, finishing location of the stage
+  - winner_of_stage: string, winner of the stage (includes rider + team info)
+  - yellow_jersey: string, holder of the yellow jersey after this stage
+  - green_jersey: string, holder of the green jersey after this stage
+  - polka_dot_jersey: string, holder of the polka-dot jersey after this stage
+  - white_jersey: string, holder of the white jersey after this stage
+
+stages_history_examples:
+  - men_record:
+      year: 1999
+      totaltdfdistance: 3870
+      stages: 16
+      start: "Lannemezan"
+      end: "Pau"
+      winner_of_stage: "David Etxebarria (O.N.C.E - Deutsche Bank)"
+      yellow_jersey: null
+      green_jersey: "Erik Zabel"
+      polka_dot_jersey: "Richard Virenque"
+      white_jersey: "Benoit Salmon"
+  - women_record:
+      year: 2024
+      totaltdfdistance: 946
+      stages: 8
+      start: "Le Grand-Bornand"
+      end: "Alpe d'Huez"
+      winner_of_stage: "Demi Vollering (Team Sd Worx - Protime)"
+      yellow_jersey: "Katarzyna Niewiadoma-Phinney"
+      green_jersey: "Marianne Vos"
+      polka_dot_jersey: "Justine Ghekiere"
+      white_jersey: "Puck Pieterse"
+
+notes_on_usage:
+  - Rider history is the primary table for overall rankings and winners.
+  - Stages history is secondary, used for analyzing stage winners and jersey holders.
+  - Men’s data spans 1903–2025; Women’s data spans 2022–2025.
+  - Schemas are identical between men and women; only row counts and coverage differ.
+  - Use totalseconds and gapseconds for calculations instead of parsing raw time strings.
