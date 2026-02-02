@@ -275,3 +275,8 @@ This API is designed to work seamlessly with Custom GPTs for data analysis and q
 ## License
 
 See [LICENSE](LICENSE) file for details.
+## Author
+
+Built by [Amar Harolikar](https://www.linkedin.com/in/amarharolikar/)
+
+Explore 30+ open source AI tools for analytics, databases & automation at [tigzig.com](https://tigzig.com)
