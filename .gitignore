@@ -25,7 +25,12 @@ var/
 
 # Virtual Environment
 venv/
+.venv/
 ENV/
+
+# Claude
+.claude/
+CLAUDE.md
 
 # IDE
 .idea/

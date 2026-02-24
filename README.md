@@ -9,7 +9,7 @@ A FastAPI server that provides secure, pooled database connections to multiple c
 - **Rate Limiting**: Built-in request throttling (100/hour default, configurable)
 - **API Key Authentication**: Secure Bearer token authentication
 - **Dual Response Formats**: JSON (10k rows) and CSV (1M rows) with configurable limits
-- **Query Timeouts**: 3-minute query timeout protection
+- **Query Timeouts**: 30-second statement timeout protection
 - **Header Logging**: Comprehensive request monitoring and security logging
 - **Read-Only Mode**: PostgreSQL connections enforce read-only transactions
 - **CORS Support**: Configurable cross-origin resource sharing
@@ -23,8 +23,8 @@ For additional data analysis capabilities, visit my AI Analyst Platform at [app.
 ### 1. Clone and Setup
 
 ```bash
-git clone <repository-url>
-cd FASTAPI_FIXED_DATABASES
+git clone https://github.com/amararun/shared-fastapi-fixed-databases.git
+cd shared-fastapi-fixed-databases
 pip install -r requirements.txt
 ```
 
@@ -33,7 +33,7 @@ pip install -r requirements.txt
 Copy the example environment file and configure your settings:
 
 ```bash
-cp .env.example .env
+cp .envExample .env
 ```
 
 Edit `.env` with your actual values:
@@ -222,10 +222,15 @@ This API is designed to work seamlessly with Custom GPTs for data analysis and q
 
 ### Security Features
 - **Bearer token authentication** with constant-time comparison
-- **Rate limiting** with SlowAPI
-- **CORS support** for cross-origin requests
-- **Request header logging** for monitoring
-- **Query timeout protection** (3 minutes)
+- **Rate limiting** with SlowAPI (per-IP + global)
+- **Per-IP and global concurrency controls** with asyncio.shield leak protection
+- **Full SQL validation stack**: prefix allowlist, keyword blocklist, system catalog blocking (PostgreSQL + MySQL), subquery depth limit, ORDER BY function validation
+- **Auto-append LIMIT** if query doesn't have one
+- **Read-only enforcement** on all PostgreSQL connections
+- **Statement timeout** (30 seconds)
+- **Error sanitization** — no stack traces or internal details leaked
+- **Global exception handler** as safety net
+- **Cloudflare-aware IP extraction** for accurate rate limiting
 
 ### Response Handling
 - **JSON responses** with custom serialization for dates/decimals
@@ -249,32 +254,44 @@ This API is designed to work seamlessly with Custom GPTs for data analysis and q
 - Set appropriate rate limits based on usage
 - Enable HTTPS in production
 
-### Performance Considerations
+## Security Hardening
 
-**Blocking Operations**: This implementation has some blocking operations that could impact concurrency under high load. These will be optimized in future versions:
+| # | Layer | What It Does |
+|---|-------|-------------|
+| 1 | Bearer token auth | All endpoints require `Authorization: Bearer` header with timing-safe comparison |
+| 2 | Fail-closed auth | If `API_KEY` env var is missing, app refuses to start |
+| 3 | SQL prefix allowlist | Only SELECT, SHOW, DESCRIBE, EXPLAIN, WITH queries allowed |
+| 4 | SQL keyword blocklist | INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, TRUNCATE, EXEC, COPY, and 15+ more blocked |
+| 5 | SQL comment rejection | Block `--` and `/*` to prevent comment-based injection bypass |
+| 6 | Postgres catalog blocking | pg_catalog, information_schema, pg_shadow, pg_stat, system functions blocked |
+| 7 | MySQL catalog blocking | mysql.user, INFORMATION_SCHEMA, performance_schema blocked |
+| 8 | Auto-append LIMIT | Queries without an outer LIMIT automatically get LIMIT 1000 |
+| 9 | Subquery depth limit | Max 3 SELECT keywords per query (main + 2 subqueries) |
+| 10 | ORDER BY validation | Function calls in ORDER BY blocked except whitelisted aggregates |
+| 11 | Per-IP rate limiting | 30 requests/minute per IP via SlowAPI |
+| 12 | Global rate limiting | 200 requests/minute across all IPs combined |
+| 13 | Per-IP concurrency cap | Max 3 simultaneous in-flight queries per IP |
+| 14 | Global concurrency cap | Max 6 simultaneous queries server-wide |
+| 15 | Concurrency leak protection | `asyncio.shield` on counter release prevents permanent lockout |
+| 16 | Read-only sessions | PostgreSQL connections enforce read-only transactions |
+| 17 | Statement timeout | 30-second timeout on all database connections |
+| 18 | CORS credentials disabled | `allow_origins=["*"]` with `allow_credentials=False` |
+| 19 | Error sanitization | Internal errors return generic messages — no stack traces leaked |
+| 20 | Global exception handler | Catches unhandled exceptions as safety net |
+| 21 | Cloudflare IP extraction | Real client IP from `cf-connecting-ip`, `x-forwarded-for` for accurate rate limiting |
 
-1. **JSON Serialization** (lines 309-310): CPU-intensive serialization in `/sqlquery/` endpoint - *To be optimized using `orjson` or `ujson`*
-2. **CSV Processing** (lines 320-325): Synchronous CSV generation in memory - *To be optimized using `polars` async or `asyncio.to_thread()`*
-3. **File I/O Operations** (lines 327-329): Synchronous temp file creation - *To be optimized using `aiofiles` or `asyncio.to_thread()`*
-4. **Dictionary Conversion** (line 299): CPU-intensive PostgreSQL result conversion - *To be optimized using `asyncio.to_thread()` or `polars`*
+## API Monitoring
 
-## Troubleshooting
+All requests are logged via [tigzig-api-monitor](https://pypi.org/project/tigzig-api-monitor/), an open-source centralized logging middleware for FastAPI. The middleware captures request metadata including client IP addresses and request bodies for API monitoring and error tracking.
 
-### Common Issues
-- **Connection errors**: Check database connection strings
-- **Authentication failures**: Verify API key matches
-- **Rate limit exceeded**: Adjust `RATE_LIMIT` setting
-- **Query timeouts**: Optimize queries or increase timeout
-- **Memory issues**: Reduce `MAX_JSON_ROWS` or `MAX_CSV_ROWS`
+**Data Retention**: The middleware captures data but does not manage its lifecycle. It is the deployer's responsibility to implement appropriate data retention and deletion policies in accordance with their own compliance requirements (GDPR, CCPA, etc.).
 
-### Logs
-- Check application logs for connection pool status
-- Monitor query performance and timeouts
-- Review rate limiting and authentication logs
+**Graceful Degradation**: If the logging service is unavailable, API calls proceed normally — logging fails silently without affecting functionality.
 
 ## License
 
 See [LICENSE](LICENSE) file for details.
+
 ## Author
 
 Built by [Amar Harolikar](https://www.linkedin.com/in/amarharolikar/)

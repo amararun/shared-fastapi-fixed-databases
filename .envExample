@@ -1,0 +1,19 @@
+# API Authentication Key (required)
+API_KEY=your-secure-api-key-here
+
+# Database connections (at least one required)
+AIVEN_POSTGRES=postgresql://user:pass@host:port/db?sslmode=require
+AIVEN_MYSQL=mysql://user:pass@host:port/db?ssl-mode=REQUIRED
+NEON_POSTGRES=postgresql://user:pass@host:port/db?sslmode=require
+SUPABASE_POSTGRES=postgresql://user:pass@host:port/db?sslmode=require
+
+# Rate limiting (defaults shown)
+RATE_LIMIT=100/hour
+
+# Response row limits (defaults shown)
+MAX_JSON_ROWS=10000
+MAX_CSV_ROWS=1000000
+
+# Connection pool (defaults shown)
+DB_POOL_MIN_SIZE=1
+DB_POOL_MAX_SIZE=4
