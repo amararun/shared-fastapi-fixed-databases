@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "https://fixed-db.hosting.tigzig.com",
+            "url": "https://dbfixed.tigzig.com",
             "description": "Main API server"
         }
     ],
@@ -174,7 +174,7 @@
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "API_KEY",
-                "description": "API Key authentication using a Bearer token. Provide your API key in the Authorization header as 'Bearer 8h8br-1NC9__hw09G4mbA'. Example: Authorization: Bearer 8h8br-1NC9__hw09G4mbA"
+                "description": "API Key authentication using a Bearer token. Provide your API key in the Authorization header as 'Bearer EMCtfgdt5rlW63Ylooy2-lGFrvjhnZEa'. Example: Authorization: Bearer EMCtfgdt5rlW63Ylooy2-lGFrvjhnZEa"
             }
         }
     }
